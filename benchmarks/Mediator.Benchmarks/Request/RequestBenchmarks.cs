@@ -112,11 +112,11 @@ public class RequestBenchmarks
         return _concreteMediator.Send(_request, CancellationToken.None);
     }
 
-    [Benchmark]
-    public ValueTask<SomeResponse> SendRequest_MessagePipe()
-    {
-        return _messagePipeHandler.InvokeAsync(_request, CancellationToken.None);
-    }
+    // [Benchmark]
+    // public ValueTask<SomeResponse> SendRequest_MessagePipe()
+    // {
+    //     return _messagePipeHandler.InvokeAsync(_request, CancellationToken.None);
+    // }
 
     [Benchmark(Baseline = true)]
     public ValueTask<SomeResponse> SendRequest_Baseline()

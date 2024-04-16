@@ -42,6 +42,10 @@ var (messageCount, messageErrorCount) = statsHandler.Stats;
 Debug.Assert(messageCount == 2, "We sent 2 pings");
 Debug.Assert(messageErrorCount == 1, "1 of them failed validation");
 
+await mediator.Send(new TestMessage1());
+await ((Mediator.Mediator)mediator).Send(new TestMessage1());
+await mediator.Send((object)new TestMessage1());
+
 Console.WriteLine("Done!");
 
 // Types used below
@@ -165,3 +169,31 @@ public sealed class FireAndForgetNotificationPublisher : INotificationPublisher
         }
     }
 }
+
+// csharpier-ignore-start
+public sealed record TestMessage1() : IRequest; public sealed record TestMessage1Handler : IRequestHandler<TestMessage1> { public ValueTask<Unit> Handle(TestMessage1 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage2() : IRequest; public sealed record TestMessage2Handler : IRequestHandler<TestMessage2> { public ValueTask<Unit> Handle(TestMessage2 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage3() : IRequest; public sealed record TestMessage3Handler : IRequestHandler<TestMessage3> { public ValueTask<Unit> Handle(TestMessage3 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage4() : IRequest; public sealed record TestMessage4Handler : IRequestHandler<TestMessage4> { public ValueTask<Unit> Handle(TestMessage4 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage5() : IRequest; public sealed record TestMessage5Handler : IRequestHandler<TestMessage5> { public ValueTask<Unit> Handle(TestMessage5 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage6() : IRequest; public sealed record TestMessage6Handler : IRequestHandler<TestMessage6> { public ValueTask<Unit> Handle(TestMessage6 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage7() : IRequest; public sealed record TestMessage7Handler : IRequestHandler<TestMessage7> { public ValueTask<Unit> Handle(TestMessage7 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage8() : IRequest; public sealed record TestMessage8Handler : IRequestHandler<TestMessage8> { public ValueTask<Unit> Handle(TestMessage8 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage9() : IRequest; public sealed record TestMessage9Handler : IRequestHandler<TestMessage9> { public ValueTask<Unit> Handle(TestMessage9 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage10() : IRequest; public sealed record TestMessage10Handler : IRequestHandler<TestMessage10> { public ValueTask<Unit> Handle(TestMessage10 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage11() : IRequest; public sealed record TestMessage11Handler : IRequestHandler<TestMessage11> { public ValueTask<Unit> Handle(TestMessage11 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage12() : IRequest; public sealed record TestMessage12Handler : IRequestHandler<TestMessage12> { public ValueTask<Unit> Handle(TestMessage12 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage13() : IRequest; public sealed record TestMessage13Handler : IRequestHandler<TestMessage13> { public ValueTask<Unit> Handle(TestMessage13 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage14() : IRequest; public sealed record TestMessage14Handler : IRequestHandler<TestMessage14> { public ValueTask<Unit> Handle(TestMessage14 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage15() : IRequest; public sealed record TestMessage15Handler : IRequestHandler<TestMessage15> { public ValueTask<Unit> Handle(TestMessage15 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage16() : IRequest; public sealed record TestMessage16Handler : IRequestHandler<TestMessage16> { public ValueTask<Unit> Handle(TestMessage16 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage17() : IRequest; public sealed record TestMessage17Handler : IRequestHandler<TestMessage17> { public ValueTask<Unit> Handle(TestMessage17 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage18() : IRequest; public sealed record TestMessage18Handler : IRequestHandler<TestMessage18> { public ValueTask<Unit> Handle(TestMessage18 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage19() : IRequest; public sealed record TestMessage19Handler : IRequestHandler<TestMessage19> { public ValueTask<Unit> Handle(TestMessage19 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage20() : IRequest; public sealed record TestMessage20Handler : IRequestHandler<TestMessage20> { public ValueTask<Unit> Handle(TestMessage20 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage21() : IRequest; public sealed record TestMessage21Handler : IRequestHandler<TestMessage21> { public ValueTask<Unit> Handle(TestMessage21 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage22() : IRequest; public sealed record TestMessage22Handler : IRequestHandler<TestMessage22> { public ValueTask<Unit> Handle(TestMessage22 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage23() : IRequest; public sealed record TestMessage23Handler : IRequestHandler<TestMessage23> { public ValueTask<Unit> Handle(TestMessage23 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage24() : IRequest; public sealed record TestMessage24Handler : IRequestHandler<TestMessage24> { public ValueTask<Unit> Handle(TestMessage24 request, CancellationToken cancellationToken) => default; }
+public sealed record TestMessage25() : IRequest; public sealed record TestMessage25Handler : IRequestHandler<TestMessage25> { public ValueTask<Unit> Handle(TestMessage25 request, CancellationToken cancellationToken) => default; }
+// csharpier-ignore-end
