@@ -235,6 +235,10 @@ namespace {{ MediatorNamespace }}
         public readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Type> CommandHandlerTypes;
         public readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Type> QueryHandlerTypes;
 
+        public readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Type> StreamRequestHandlerTypes;
+        public readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Type> StreamCommandHandlerTypes;
+        public readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Type> StreamQueryHandlerTypes;
+
         public ContainerMetadata(global::System.IServiceProvider sp)
         {
             {{~ if ServiceLifetimeIsScoped ~}}
@@ -257,6 +261,19 @@ namespace {{ MediatorNamespace }}
             {{~ end ~}}
             {{~ for message in IQueryMessages ~}}
             QueryHandlerTypes.Add(typeof({{ message.FullName }}), typeof({{ message.HandlerWrapperTypeNameWithGenericTypeArguments }}));
+            {{~ end ~}}
+
+            StreamRequestHandlerTypes = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Type>();
+            StreamCommandHandlerTypes = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Type>();
+            StreamQueryHandlerTypes = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Type>();
+            {{~ for message in IStreamRequestMessages ~}}
+            StreamRequestHandlerTypes.Add(typeof({{ message.FullName }}), typeof({{ message.HandlerWrapperTypeNameWithGenericTypeArguments }}));
+            {{~ end ~}}
+            {{~ for message in IStreamCommandMessages ~}}
+            StreamCommandHandlerTypes.Add(typeof({{ message.FullName }}), typeof({{ message.HandlerWrapperTypeNameWithGenericTypeArguments }}));
+            {{~ end ~}}
+            {{~ for message in IStreamQueryMessages ~}}
+            StreamQueryHandlerTypes.Add(typeof({{ message.FullName }}), typeof({{ message.HandlerWrapperTypeNameWithGenericTypeArguments }}));
             {{~ end ~}}
         }
     }
@@ -486,6 +503,82 @@ namespace {{ MediatorNamespace }}
             }
             {{~ end ~}}
 
+
+            {{~ if HasManyStreamRequests ~}}
+            {{~ if ServiceLifetimeIsSingleton ~}}
+            public readonly global::System.Collections.Generic.Dictionary<global::System.Type, object> StreamRequestHandlers;
+            {{~ else ~}}
+            public readonly global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object> StreamRequestHandlers;
+            {{~ end ~}}
+            public object GetStreamRequestHandler(global::System.Type type)
+            {
+                {{~ if ServiceLifetimeIsSingleton ~}}
+                if (!StreamRequestHandlers.TryGetValue(type, out var handler))
+                    throw new global::System.InvalidOperationException();
+                return handler;
+                {{~ else ~}}
+                return StreamRequestHandlers.GetOrAdd(type, (type, self) =>
+                {
+                    var diCache = (DICache)self;
+                    if (!diCache._containerMetadata.StreamRequestHandlerTypes.TryGetValue(type, out var handlerType))
+                        throw new global::System.InvalidOperationException();
+
+                    return diCache._sp.GetRequiredService(handlerType);
+                }, this);
+                {{~ end ~}}
+            }
+            {{~ end ~}}
+
+            {{~ if HasManyStreamCommands ~}}
+            {{~ if ServiceLifetimeIsSingleton ~}}
+            public readonly global::System.Collections.Generic.Dictionary<global::System.Type, object> StreamCommandHandlers;
+            {{~ else ~}}
+            public readonly global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object> StreamCommandHandlers;
+            {{~ end ~}}
+            public object GetStreamCommandHandler(global::System.Type type)
+            {
+                {{~ if ServiceLifetimeIsSingleton ~}}
+                if (!StreamCommandHandlers.TryGetValue(type, out var handler))
+                    throw new global::System.InvalidOperationException();
+                return handler;
+                {{~ else ~}}
+                return StreamCommandHandlers.GetOrAdd(type, (type, self) =>
+                {
+                    var diCache = (DICache)self;
+                    if (!diCache._containerMetadata.StreamCommandHandlerTypes.TryGetValue(type, out var handlerType))
+                        throw new global::System.InvalidOperationException();
+
+                    return diCache._sp.GetRequiredService(handlerType);
+                }, this);
+                {{~ end ~}}
+            }
+            {{~ end ~}}
+
+            {{~ if HasManyStreamQueries ~}}
+            {{~ if ServiceLifetimeIsSingleton ~}}
+            public readonly global::System.Collections.Generic.Dictionary<global::System.Type, object> StreamQueryHandlers;
+            {{~ else ~}}
+            public readonly global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object> StreamQueryHandlers;
+            {{~ end ~}}
+            public object GetStreamQueryHandler(global::System.Type type)
+            {
+                {{~ if ServiceLifetimeIsSingleton ~}}
+                if (!StreamQueryHandlers.TryGetValue(type, out var handler))
+                    throw new global::System.InvalidOperationException();
+                return handler;
+                {{~ else ~}}
+                return StreamQueryHandlers.GetOrAdd(type, (type, self) =>
+                {
+                    var diCache = (DICache)self;
+                    if (!diCache._containerMetadata.StreamQueryHandlerTypes.TryGetValue(type, out var handlerType))
+                        throw new global::System.InvalidOperationException();
+
+                    return diCache._sp.GetRequiredService(handlerType);
+                }, this);
+                {{~ end ~}}
+            }
+            {{~ end ~}}
+
             {{~ if ServiceLifetimeIsSingleton ~}}
             {{~ for message in RequestMessages ~}}
             public readonly {{ message.HandlerWrapperTypeNameWithGenericTypeArguments }} {{ message.HandlerWrapperPropertyName }};
@@ -559,6 +652,39 @@ namespace {{ MediatorNamespace }}
                 {{~ end ~}}
                 {{~ else ~}}
                 QueryHandlers = new global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object>();
+                {{~ end ~}}
+                {{~ end ~}}
+
+                {{~ if HasManyStreamRequests ~}}
+                {{~ if ServiceLifetimeIsSingleton ~}}
+                StreamRequestHandlers = new global::System.Collections.Generic.Dictionary<global::System.Type, object>();
+                {{~ for message in IStreamRequestMessages ~}}
+                StreamRequestHandlers.Add(typeof({{ message.FullName }}), sp.GetRequiredService(_containerMetadata.StreamRequestHandlerTypes[typeof({{ message.FullName }})]));
+                {{~ end ~}}
+                {{~ else ~}}
+                StreamRequestHandlers = new global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object>();
+                {{~ end ~}}
+                {{~ end ~}}
+
+                {{~ if HasManyStreamCommands ~}}
+                {{~ if ServiceLifetimeIsSingleton ~}}
+                StreamCommandHandlers = new global::System.Collections.Generic.Dictionary<global::System.Type, object>();
+                {{~ for message in IStreamCommandMessages ~}}
+                StreamCommandHandlers.Add(typeof({{ message.FullName }}), sp.GetRequiredService(_containerMetadata.StreamCommandHandlerTypes[typeof({{ message.FullName }})]));
+                {{~ end ~}}
+                {{~ else ~}}
+                StreamCommandHandlers = new global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object>();
+                {{~ end ~}}
+                {{~ end ~}}
+
+                {{~ if HasManyStreamQueries ~}}
+                {{~ if ServiceLifetimeIsSingleton ~}}
+                StreamQueryHandlers = new global::System.Collections.Generic.Dictionary<global::System.Type, object>();
+                {{~ for message in IStreamQueryMessages ~}}
+                StreamQueryHandlers.Add(typeof({{ message.FullName }}), sp.GetRequiredService(_containerMetadata.StreamQueryHandlerTypes[typeof({{ message.FullName }})]));
+                {{~ end ~}}
+                {{~ else ~}}
+                StreamQueryHandlers = new global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object>();
                 {{~ end ~}}
                 {{~ end ~}}
 
@@ -718,6 +844,12 @@ namespace {{ MediatorNamespace }}
         )
         {
             {{- if HasStreamRequests }}
+            {{- if HasManyStreamRequests }}
+            var handlerObj = {{ DICacheFieldName }}.GetStreamRequestHandler(request.GetType());
+            global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IStreamRequestHandlerBase<TResponse>);
+            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<object, global::{{ MediatorNamespace }}.IStreamRequestHandlerBase<TResponse>>(ref handlerObj);
+            return handler.Handle(request, cancellationToken);
+            {{~ else ~}}
             switch (request)
             {
                 {{~ for message in IStreamRequestMessages ~}}
@@ -733,6 +865,7 @@ namespace {{ MediatorNamespace }}
                     return default;
                 }
             }
+            {{~ end ~}}
             {{- else }}
             ThrowInvalidStreamRequest(request, nameof(request));
             return default;
@@ -843,6 +976,12 @@ namespace {{ MediatorNamespace }}
         )
         {
             {{- if HasStreamCommands }}
+            {{- if HasManyStreamCommands }}
+            var handlerObj = {{ DICacheFieldName }}.GetStreamCommandHandler(command.GetType());
+            global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IStreamCommandHandlerBase<TResponse>);
+            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<object, global::{{ MediatorNamespace }}.IStreamCommandHandlerBase<TResponse>>(ref handlerObj);
+            return handler.Handle(command, cancellationToken);
+            {{~ else ~}}
             switch (command)
             {
                 {{~ for message in IStreamCommandMessages ~}}
@@ -858,6 +997,7 @@ namespace {{ MediatorNamespace }}
                     return default;
                 }
             }
+            {{~ end ~}}
             {{- else }}
             ThrowInvalidStreamCommand(command, nameof(command));
             return default;
@@ -968,6 +1108,12 @@ namespace {{ MediatorNamespace }}
         )
         {
             {{- if HasStreamQueries }}
+            {{- if HasManyStreamQueries }}
+            var handlerObj = {{ DICacheFieldName }}.GetStreamQueryHandler(query.GetType());
+            global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IStreamQueryHandlerBase<TResponse>);
+            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<object, global::{{ MediatorNamespace }}.IStreamQueryHandlerBase<TResponse>>(ref handlerObj);
+            return handler.Handle(query, cancellationToken);
+            {{~ else ~}}
             switch (query)
             {
                 {{~ for message in IStreamQueryMessages ~}}
@@ -983,6 +1129,7 @@ namespace {{ MediatorNamespace }}
                     return default;
                 }
             }
+            {{~ end ~}}
             {{- else }}
             ThrowInvalidStreamQuery(query, nameof(query));
             return default;
@@ -1090,22 +1237,92 @@ namespace {{ MediatorNamespace }}
             {{- if HasAnyStreamRequest }}
             switch (message)
             {
-                {{~ for message in IStreamMessages ~}}
-                case {{ message.RequestFullName }} m:
-				{
-					{{- if message.ResponseIsValueType }}
-                    var value = CreateStream({{- message.ParameterModifier -}}m, cancellationToken);
-					return AsyncWrapper(value);
-					{{- else }}
-                    return CreateStream({{- message.ParameterModifier -}}m, cancellationToken);
-                    {{- end }}
-                }
-                {{~ end ~}}
+                case global::Mediator.IBaseStreamRequest request:
+                    {{~ if HasManyStreamRequests ~}}
+                    var handlerObj = {{ DICacheFieldName }}.GetStreamRequestHandler(request.GetType());
+                    global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IStreamMessageHandlerBase);
+                    var handler = global::System.Runtime.CompilerServices.Unsafe.As<global::{{ MediatorNamespace }}.IStreamMessageHandlerBase>(handlerObj);
+                    return handler.Handle(request, cancellationToken);
+                    {{~ else ~}}
+                    switch (request)
+                    {
+                        {{~ for message in IStreamRequestMessages ~}}
+                        case {{ message.RequestFullName }} m:
+                        {
+                            {{- if message.ResponseIsValueType }}
+                            var value = CreateStream({{- message.ParameterModifier -}}m, cancellationToken);
+                            return AsyncWrapper(value);
+                            {{- else }}
+                            return CreateStream({{- message.ParameterModifier -}}m, cancellationToken);
+                            {{- end }}
+                        }
+                        {{~ end ~}}
+                        default:
+                        {
+                            ThrowInvalidStreamMessage(message, nameof(message));
+                            return default;
+                        }
+                    }
+                    {{~ end ~}}
+                case global::Mediator.IBaseStreamCommand command:
+                    {{~ if HasManyStreamCommands ~}}
+                    var handlerObj = {{ DICacheFieldName }}.GetStreamCommandHandler(command.GetType());
+                    global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IStreamMessageHandlerBase);
+                    var handler = global::System.Runtime.CompilerServices.Unsafe.As<global::{{ MediatorNamespace }}.IStreamMessageHandlerBase>(handlerObj);
+                    return handler.Handle(command, cancellationToken);
+                    {{~ else ~}}
+                    switch (command)
+                    {
+                        {{~ for message in IStreamCommandMessages ~}}
+                        case {{ message.CommandFullName }} m:
+                        {
+                            {{- if message.ResponseIsValueType }}
+                            var value = CreateStream({{- message.ParameterModifier -}}m, cancellationToken);
+                            return AsyncWrapper(value);
+                            {{- else }}
+                            return CreateStream({{- message.ParameterModifier -}}m, cancellationToken);
+                            {{- end }}
+                        }
+                        {{~ end ~}}
+                        default:
+                        {
+                            ThrowInvalidStreamMessage(message, nameof(message));
+                            return default;
+                        }
+                    }
+                    {{~ end ~}}
+
+                case global::Mediator.IBaseStreamQuery query:
+                    {{~ if HasManyStreamQueries ~}}
+                    var handlerObj = {{ DICacheFieldName }}.GetStreamQueryHandler(query.GetType());
+                    global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IStreamMessageHandlerBase);
+                    var handler = global::System.Runtime.CompilerServices.Unsafe.As<global::{{ MediatorNamespace }}.IStreamMessageHandlerBase>(handlerObj);
+                    return handler.Handle(query, cancellationToken);
+                    {{~ else ~}}
+                    switch (query)
+                    {
+                        {{~ for message in IStreamQueryMessages ~}}
+                        case {{ message.QueryFullName }} m:
+                        {
+                            {{- if message.ResponseIsValueType }}
+                            var value = CreateStream({{- message.ParameterModifier -}}m, cancellationToken);
+                            return AsyncWrapper(value);
+                            {{- else }}
+                            return CreateStream({{- message.ParameterModifier -}}m, cancellationToken);
+                            {{- end }}
+                        }
+                        {{~ end ~}}
+                        default:
+                        {
+                            ThrowInvalidStreamMessage(message, nameof(message));
+                            return default;
+                        }
+                    }
+                    {{~ end ~}}
+
                 default:
-                {
                     ThrowInvalidStreamMessage(message, nameof(message));
                     return default;
-                }
             }
 
             {{- if HasAnyValueTypeStreamResponse }}

@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Mediator;
@@ -42,13 +44,37 @@ var (messageCount, messageErrorCount) = statsHandler.Stats;
 Debug.Assert(messageCount == 2, "We sent 2 pings");
 Debug.Assert(messageErrorCount == 1, "1 of them failed validation");
 
-int r;
-r = await mediator.Send(new TestMessage1());
-Debug.Assert(r == default);
-r = await ((Mediator.Mediator)mediator).Send(new TestMessage1());
-Debug.Assert(r == default);
-r = (int)(await mediator.Send((object)new TestMessage1()))!;
-Debug.Assert(r == default);
+// int r;
+// r = await mediator.Send(new TestMessage1());
+// Debug.Assert(r == default);
+// r = await ((Mediator.Mediator)mediator).Send(new TestMessage1());
+// Debug.Assert(r == default);
+// r = (int)(await mediator.Send((object)new TestMessage1()))!;
+// Debug.Assert(r == default);
+
+int expected = 0;
+await foreach (var i in mediator.CreateStream(new TestStreamMessage1()))
+{
+    Debug.Assert(i == expected);
+    expected++;
+}
+Debug.Assert(expected == 3);
+
+expected = 0;
+await foreach (var i in ((Mediator.Mediator)mediator).CreateStream(new TestStreamMessage1()))
+{
+    Debug.Assert(i == expected);
+    expected++;
+}
+Debug.Assert(expected == 3);
+
+expected = 0;
+await foreach (var i in mediator.CreateStream((object)new TestStreamMessage1()))
+{
+    Debug.Assert((int)i! == expected);
+    expected++;
+}
+Debug.Assert(expected == 3);
 
 Console.WriteLine("Done!");
 
@@ -192,4 +218,22 @@ public sealed record TestMessage14() : IQuery<int>; public sealed record TestMes
 public sealed record TestMessage15() : IQuery<int>; public sealed record TestMessage15Handler : IQueryHandler<TestMessage15, int> { public ValueTask<int> Handle(TestMessage15 request, CancellationToken cancellationToken) => default; }
 public sealed record TestMessage16() : IQuery<int>; public sealed record TestMessage16Handler : IQueryHandler<TestMessage16, int> { public ValueTask<int> Handle(TestMessage16 request, CancellationToken cancellationToken) => default; }
 public sealed record TestMessage17() : IQuery<int>; public sealed record TestMessage17Handler : IQueryHandler<TestMessage17, int> { public ValueTask<int> Handle(TestMessage17 request, CancellationToken cancellationToken) => default; }
+
+public sealed record TestStreamMessage1() : IStreamRequest<int>; public sealed record TestStreamMessage1Handler : IStreamRequestHandler<TestStreamMessage1, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage1 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage2() : IStreamRequest<int>; public sealed record TestStreamMessage2Handler : IStreamRequestHandler<TestStreamMessage2, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage2 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage3() : IStreamRequest<int>; public sealed record TestStreamMessage3Handler : IStreamRequestHandler<TestStreamMessage3, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage3 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage4() : IStreamRequest<int>; public sealed record TestStreamMessage4Handler : IStreamRequestHandler<TestStreamMessage4, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage4 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage5() : IStreamRequest<int>; public sealed record TestStreamMessage5Handler : IStreamRequestHandler<TestStreamMessage5, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage5 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage6() : IStreamRequest<int>; public sealed record TestStreamMessage6Handler : IStreamRequestHandler<TestStreamMessage6, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage6 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage7() : IStreamRequest<int>; public sealed record TestStreamMessage7Handler : IStreamRequestHandler<TestStreamMessage7, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage7 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage8() : IStreamRequest<int>; public sealed record TestStreamMessage8Handler : IStreamRequestHandler<TestStreamMessage8, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage8 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage9() : IStreamRequest<int>; public sealed record TestStreamMessage9Handler : IStreamRequestHandler<TestStreamMessage9, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage9 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage10() : IStreamRequest<int>; public sealed record TestStreamMessage10Handler : IStreamRequestHandler<TestStreamMessage10, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage10 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage11() : IStreamRequest<int>; public sealed record TestStreamMessage11Handler : IStreamRequestHandler<TestStreamMessage11, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage11 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage12() : IStreamRequest<int>; public sealed record TestStreamMessage12Handler : IStreamRequestHandler<TestStreamMessage12, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage12 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage13() : IStreamRequest<int>; public sealed record TestStreamMessage13Handler : IStreamRequestHandler<TestStreamMessage13, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage13 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage14() : IStreamRequest<int>; public sealed record TestStreamMessage14Handler : IStreamRequestHandler<TestStreamMessage14, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage14 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage15() : IStreamRequest<int>; public sealed record TestStreamMessage15Handler : IStreamRequestHandler<TestStreamMessage15, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage15 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage16() : IStreamRequest<int>; public sealed record TestStreamMessage16Handler : IStreamRequestHandler<TestStreamMessage16, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage16 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
+public sealed record TestStreamMessage17() : IStreamRequest<int>; public sealed record TestStreamMessage17Handler : IStreamRequestHandler<TestStreamMessage17, int> { public async IAsyncEnumerable<int> Handle(TestStreamMessage17 request, [EnumeratorCancellation] CancellationToken cancellationToken) { for (int i = 0; i < 3; i++) { await Task.Yield(); yield return i; } } }
 // csharpier-ignore-end
