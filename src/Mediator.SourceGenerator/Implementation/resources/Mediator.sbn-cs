@@ -1274,7 +1274,7 @@ namespace {{ MediatorNamespace }}
                     switch (command)
                     {
                         {{~ for message in IStreamCommandMessages ~}}
-                        case {{ message.CommandFullName }} m:
+                        case {{ message.RequestFullName }} m:
                         {
                             {{- if message.ResponseIsValueType }}
                             var value = CreateStream({{- message.ParameterModifier -}}m, cancellationToken);
@@ -1302,7 +1302,7 @@ namespace {{ MediatorNamespace }}
                     switch (query)
                     {
                         {{~ for message in IStreamQueryMessages ~}}
-                        case {{ message.QueryFullName }} m:
+                        case {{ message.RequestFullName }} m:
                         {
                             {{- if message.ResponseIsValueType }}
                             var value = CreateStream({{- message.ParameterModifier -}}m, cancellationToken);
