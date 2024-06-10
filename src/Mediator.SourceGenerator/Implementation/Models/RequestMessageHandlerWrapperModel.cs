@@ -54,4 +54,11 @@ internal sealed record RequestMessageHandlerWrapperModel
         IsStreaming
             ? "global::System.Collections.Generic.IAsyncEnumerable<TResponse>"
             : "global::System.Threading.Tasks.ValueTask<TResponse>";
+
+    public string ReturnTypeNameWhenObject =>
+        IsStreaming
+            ? "global::System.Collections.Generic.IAsyncEnumerable<object?>"
+            : "global::System.Threading.Tasks.ValueTask<object?>";
+
+    public string HandlerBase => IsStreaming ? "IStreamMessageHandlerBase" : "IMessageHandlerBase";
 }

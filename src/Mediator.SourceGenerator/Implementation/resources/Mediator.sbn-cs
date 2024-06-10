@@ -117,9 +117,20 @@ namespace Microsoft.Extensions.DependencyInjection
 
 namespace {{ MediatorNamespace }}
 {
+    [global::System.CodeDom.Compiler.GeneratedCode("Mediator.SourceGenerator", "{{ GeneratorVersion }}")]
+    internal interface IMessageHandlerBase
+    {
+        global::System.Threading.Tasks.ValueTask<object?> Handle(object request, global::System.Threading.CancellationToken cancellationToken);
+    }
+    [global::System.CodeDom.Compiler.GeneratedCode("Mediator.SourceGenerator", "{{ GeneratorVersion }}")]
+    internal interface IStreamMessageHandlerBase
+    {
+        global::System.Collections.Generic.IAsyncEnumerable<object?> Handle(object request, global::System.Threading.CancellationToken cancellationToken);
+    }
+
     {{~ for wrapperType in RequestMessageHandlerWrappers ~}}
     [global::System.CodeDom.Compiler.GeneratedCode("Mediator.SourceGenerator", "{{ GeneratorVersion }}")]
-    internal interface I{{ wrapperType.MessageType }}HandlerBase<TResponse>
+    internal interface I{{ wrapperType.MessageType }}HandlerBase<TResponse> : {{ wrapperType.HandlerBase }}
     {
         {{ wrapperType.ReturnTypeName }} Handle(global::Mediator.I{{ wrapperType.MessageType }}<TResponse> request, global::System.Threading.CancellationToken cancellationToken);
     }
@@ -153,6 +164,17 @@ namespace {{ MediatorNamespace }}
 
         public {{ wrapperType.ReturnTypeName }} Handle(global::Mediator.I{{ wrapperType.MessageType }}<TResponse> request, global::System.Threading.CancellationToken cancellationToken) =>
             Handle((TRequest)request, cancellationToken);
+
+        {{~ if wrapperType.IsStreaming ~}}
+        public async {{ wrapperType.ReturnTypeNameWhenObject }} Handle(object request, [global::System.Runtime.CompilerServices.EnumeratorCancellation] global::System.Threading.CancellationToken cancellationToken)
+        {
+            await foreach (var el in Handle((TRequest)request, cancellationToken))
+                yield return el;
+        }
+        {{~ else ~}}
+        public async {{ wrapperType.ReturnTypeNameWhenObject }} Handle(object request, global::System.Threading.CancellationToken cancellationToken) =>
+            await Handle((TRequest)request, cancellationToken);
+        {{~ end ~}}
     }
     [global::System.CodeDom.Compiler.GeneratedCode("Mediator.SourceGenerator", "{{ GeneratorVersion }}")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -184,6 +206,17 @@ namespace {{ MediatorNamespace }}
 
         public {{ wrapperType.ReturnTypeName }} Handle(global::Mediator.I{{ wrapperType.MessageType }}<TResponse> request, global::System.Threading.CancellationToken cancellationToken) =>
             Handle((TRequest)request, cancellationToken);
+
+        {{~ if wrapperType.IsStreaming ~}}
+        public async {{ wrapperType.ReturnTypeNameWhenObject }} Handle(object request, [global::System.Runtime.CompilerServices.EnumeratorCancellation] global::System.Threading.CancellationToken cancellationToken)
+        {
+            await foreach (var el in Handle((TRequest)request, cancellationToken))
+                yield return el;
+        }
+        {{~ else ~}}
+        public async {{ wrapperType.ReturnTypeNameWhenObject }} Handle(object request, global::System.Threading.CancellationToken cancellationToken) =>
+            await Handle((TRequest)request, cancellationToken);
+        {{~ end ~}}
     }
     {{~ end ~}}
 
@@ -380,11 +413,11 @@ namespace {{ MediatorNamespace }}
 
             {{~ if HasManyRequests ~}}
             {{~ if ServiceLifetimeIsSingleton ~}}
-            public readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Object> RequestHandlers;
+            public readonly global::System.Collections.Generic.Dictionary<global::System.Type, object> RequestHandlers;
             {{~ else ~}}
-            public readonly global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.Object> RequestHandlers;
+            public readonly global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object> RequestHandlers;
             {{~ end ~}}
-            public global::System.Object GetRequestHandler(global::System.Type type)
+            public object GetRequestHandler(global::System.Type type)
             {
                 {{~ if ServiceLifetimeIsSingleton ~}}
                 if (!RequestHandlers.TryGetValue(type, out var handler))
@@ -405,11 +438,11 @@ namespace {{ MediatorNamespace }}
 
             {{~ if HasManyCommands ~}}
             {{~ if ServiceLifetimeIsSingleton ~}}
-            public readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Object> CommandHandlers;
+            public readonly global::System.Collections.Generic.Dictionary<global::System.Type, object> CommandHandlers;
             {{~ else ~}}
-            public readonly global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.Object> CommandHandlers;
+            public readonly global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object> CommandHandlers;
             {{~ end ~}}
-            public global::System.Object GetCommandHandler(global::System.Type type)
+            public object GetCommandHandler(global::System.Type type)
             {
                 {{~ if ServiceLifetimeIsSingleton ~}}
                 if (!CommandHandlers.TryGetValue(type, out var handler))
@@ -430,11 +463,11 @@ namespace {{ MediatorNamespace }}
 
             {{~ if HasManyQueries ~}}
             {{~ if ServiceLifetimeIsSingleton ~}}
-            public readonly global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Object> QueryHandlers;
+            public readonly global::System.Collections.Generic.Dictionary<global::System.Type, object> QueryHandlers;
             {{~ else ~}}
-            public readonly global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.Object> QueryHandlers;
+            public readonly global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object> QueryHandlers;
             {{~ end ~}}
-            public global::System.Object GetQueryHandler(global::System.Type type)
+            public object GetQueryHandler(global::System.Type type)
             {
                 {{~ if ServiceLifetimeIsSingleton ~}}
                 if (!QueryHandlers.TryGetValue(type, out var handler))
@@ -498,34 +531,34 @@ namespace {{ MediatorNamespace }}
 
                 {{~ if HasManyRequests ~}}
                 {{~ if ServiceLifetimeIsSingleton ~}}
-                RequestHandlers = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Object>();
+                RequestHandlers = new global::System.Collections.Generic.Dictionary<global::System.Type, object>();
                 {{~ for message in IRequestMessages ~}}
                 RequestHandlers.Add(typeof({{ message.FullName }}), sp.GetRequiredService(_containerMetadata.RequestHandlerTypes[typeof({{ message.FullName }})]));
                 {{~ end ~}}
                 {{~ else ~}}
-                RequestHandlers = new global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.Object>();
+                RequestHandlers = new global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object>();
                 {{~ end ~}}
                 {{~ end ~}}
 
                 {{~ if HasManyCommands ~}}
                 {{~ if ServiceLifetimeIsSingleton ~}}
-                CommandHandlers = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Object>();
+                CommandHandlers = new global::System.Collections.Generic.Dictionary<global::System.Type, object>();
                 {{~ for message in ICommandMessages ~}}
                 CommandHandlers.Add(typeof({{ message.FullName }}), sp.GetRequiredService(_containerMetadata.CommandHandlerTypes[typeof({{ message.FullName }})]));
                 {{~ end ~}}
                 {{~ else ~}}
-                CommandHandlers = new global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.Object>();
+                CommandHandlers = new global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object>();
                 {{~ end ~}}
                 {{~ end ~}}
 
                 {{~ if HasManyQueries ~}}
                 {{~ if ServiceLifetimeIsSingleton ~}}
-                QueryHandlers = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Object>();
+                QueryHandlers = new global::System.Collections.Generic.Dictionary<global::System.Type, object>();
                 {{~ for message in IQueryMessages ~}}
                 QueryHandlers.Add(typeof({{ message.FullName }}), sp.GetRequiredService(_containerMetadata.QueryHandlerTypes[typeof({{ message.FullName }})]));
                 {{~ end ~}}
                 {{~ else ~}}
-                QueryHandlers = new global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.Object>();
+                QueryHandlers = new global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, object>();
                 {{~ end ~}}
                 {{~ end ~}}
 
@@ -599,7 +632,7 @@ namespace {{ MediatorNamespace }}
             {{~ if HasManyRequests ~}}
             var handlerObj = {{ DICacheFieldName }}.GetRequestHandler(request.GetType());
             global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IRequestHandlerBase<TResponse>);
-            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<global::System.Object, global::{{ MediatorNamespace }}.IRequestHandlerBase<TResponse>>(ref handlerObj);
+            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<object, global::{{ MediatorNamespace }}.IRequestHandlerBase<TResponse>>(ref handlerObj);
             return handler.Handle(request, cancellationToken);
             {{~ else ~}}
             switch (request)
@@ -645,7 +678,7 @@ namespace {{ MediatorNamespace }}
             {{~ if HasManyRequests ~}}
             var handlerObj = {{ DICacheFieldName }}.GetRequestHandler(request.GetType());
             global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IRequestHandlerBase<TResponse>);
-            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<global::System.Object, global::{{ MediatorNamespace }}.IRequestHandlerBase<TResponse>>(ref handlerObj);
+            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<object, global::{{ MediatorNamespace }}.IRequestHandlerBase<TResponse>>(ref handlerObj);
             return handler.Handle(request, cancellationToken);
             {{~ else ~}}
             switch (request)
@@ -722,10 +755,10 @@ namespace {{ MediatorNamespace }}
         {
             {{- if HasCommands }}
             {{~ if HasManyCommands ~}}
-            var handlerObj = {{ DICacheFieldName }}.GetCommandHandler(request.GetType());
+            var handlerObj = {{ DICacheFieldName }}.GetCommandHandler(command.GetType());
             global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.ICommandHandlerBase<TResponse>);
-            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<global::System.Object, global::{{ MediatorNamespace }}.ICommandHandlerBase<TResponse>>(ref handlerObj);
-            return handler.Handle(request, cancellationToken);
+            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<object, global::{{ MediatorNamespace }}.ICommandHandlerBase<TResponse>>(ref handlerObj);
+            return handler.Handle(command, cancellationToken);
             {{~ else ~}}
             switch (command)
             {
@@ -768,10 +801,10 @@ namespace {{ MediatorNamespace }}
         {
             {{- if HasCommands }}
             {{~ if HasManyCommands ~}}
-            var handlerObj = {{ DICacheFieldName }}.GetCommandHandler(request.GetType());
+            var handlerObj = {{ DICacheFieldName }}.GetCommandHandler(command.GetType());
             global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.ICommandHandlerBase<TResponse>);
-            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<global::System.Object, global::{{ MediatorNamespace }}.ICommandHandlerBase<TResponse>>(ref handlerObj);
-            return handler.Handle(request, cancellationToken);
+            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<object, global::{{ MediatorNamespace }}.ICommandHandlerBase<TResponse>>(ref handlerObj);
+            return handler.Handle(command, cancellationToken);
             {{~ else ~}}
             switch (command)
             {
@@ -847,10 +880,10 @@ namespace {{ MediatorNamespace }}
         {
             {{- if HasQueries }}
             {{~ if HasManyQueries ~}}
-            var handlerObj = {{ DICacheFieldName }}.GetQueryHandler(request.GetType());
+            var handlerObj = {{ DICacheFieldName }}.GetQueryHandler(query.GetType());
             global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IQueryHandlerBase<TResponse>);
-            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<global::System.Object, global::{{ MediatorNamespace }}.IQueryHandlerBase<TResponse>>(ref handlerObj);
-            return handler.Handle(request, cancellationToken);
+            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<object, global::{{ MediatorNamespace }}.IQueryHandlerBase<TResponse>>(ref handlerObj);
+            return handler.Handle(query, cancellationToken);
             {{~ else ~}}
             switch (query)
             {
@@ -893,10 +926,10 @@ namespace {{ MediatorNamespace }}
         {
             {{- if HasQueries }}
             {{~ if HasManyQueries ~}}
-            var handlerObj = {{ DICacheFieldName }}.GetQueryHandler(request.GetType());
+            var handlerObj = {{ DICacheFieldName }}.GetQueryHandler(query.GetType());
             global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IQueryHandlerBase<TResponse>);
-            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<global::System.Object, global::{{ MediatorNamespace }}.IQueryHandlerBase<TResponse>>(ref handlerObj);
-            return handler.Handle(request, cancellationToken);
+            ref var handler = ref global::System.Runtime.CompilerServices.Unsafe.As<object, global::{{ MediatorNamespace }}.IQueryHandlerBase<TResponse>>(ref handlerObj);
+            return handler.Handle(query, cancellationToken);
             {{~ else ~}}
             switch (query)
             {
@@ -973,14 +1006,66 @@ namespace {{ MediatorNamespace }}
             {{- if HasAnyRequest }}
             switch (message)
             {
-                {{~ for message in IMessages ~}}
-                case {{ message.RequestFullName }} m: return await Send({{- message.ParameterModifier -}}m, cancellationToken);
-                {{~ end ~}}
+                case global::Mediator.IBaseRequest request:
+                    {{~ if HasManyRequests ~}}
+                    var handlerObj = {{ DICacheFieldName }}.GetRequestHandler(request.GetType());
+                    global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IMessageHandlerBase);
+                    var handler = global::System.Runtime.CompilerServices.Unsafe.As<global::{{ MediatorNamespace }}.IMessageHandlerBase>(handlerObj);
+                    return await handler.Handle(request, cancellationToken);
+                    {{~ else ~}}
+                    switch (request)
+                    {
+                        {{~ for message in IRequestMessages ~}}
+                        case {{ message.RequestFullName }} r: return await Send({{- message.ParameterModifier -}}r, cancellationToken);
+                        {{~ end ~}}
+                        default:
+                        {
+                            ThrowInvalidRequest(request, nameof(request));
+                            return default;
+                        }
+                    }
+                    {{~ end ~}}
+                case global::Mediator.IBaseCommand command:
+                    {{~ if HasManyCommands ~}}
+                    var handlerObj = {{ DICacheFieldName }}.GetCommandHandler(command.GetType());
+                    global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IMessageHandlerBase);
+                    var handler = global::System.Runtime.CompilerServices.Unsafe.As<global::{{ MediatorNamespace }}.IMessageHandlerBase>(handlerObj);
+                    return await handler.Handle(command, cancellationToken);
+                    {{~ else ~}}
+                    switch (command)
+                    {
+                        {{~ for message in ICommandMessages ~}}
+                        case {{ message.RequestFullName }} r: return await Send({{- message.ParameterModifier -}}r, cancellationToken);
+                        {{~ end ~}}
+                        default:
+                        {
+                            ThrowInvalidCommand(command, nameof(command));
+                            return default;
+                        }
+                    }
+                    {{~ end ~}}
+                case global::Mediator.IBaseQuery query:
+                    {{~ if HasManyQueries ~}}
+                    var handlerObj = {{ DICacheFieldName }}.GetQueryHandler(query.GetType());
+                    global::System.Diagnostics.Debug.Assert(handlerObj is global::{{ MediatorNamespace }}.IMessageHandlerBase);
+                    var handler = global::System.Runtime.CompilerServices.Unsafe.As<global::{{ MediatorNamespace }}.IMessageHandlerBase>(handlerObj);
+                    return await handler.Handle(query, cancellationToken);
+                    {{~ else ~}}
+                    switch (query)
+                    {
+                        {{~ for message in IQueryMessages ~}}
+                        case {{ message.RequestFullName }} r: return await Send({{- message.ParameterModifier -}}r, cancellationToken);
+                        {{~ end ~}}
+                        default:
+                        {
+                            ThrowInvalidQuery(query, nameof(query));
+                            return default;
+                        }
+                    }
+                    {{~ end ~}}
                 default:
-                {
                     ThrowInvalidMessage(message, nameof(message));
                     return default;
-                }
             }
             {{- else }}
             ThrowInvalidMessage(message, nameof(message));

@@ -76,7 +76,7 @@ internal record CompilationModel
     public bool HasCommands => _requestMessages.Any(r => r.Handler is not null && r.MessageType == "Command");
     public bool HasQueries => _requestMessages.Any(r => r.Handler is not null && r.MessageType == "Query");
 
-    private const int ManyMessagesTreshold = 24;
+    private const int ManyMessagesTreshold = 16;
 
     public bool HasManyRequests =>
         _requestMessages.Count(r => r.Handler is not null && r.MessageType == "Request") > ManyMessagesTreshold;
@@ -90,6 +90,13 @@ internal record CompilationModel
     public bool HasStreamQueries => _requestMessages.Any(r => r.Handler is not null && r.MessageType == "StreamQuery");
     public bool HasStreamCommands =>
         _requestMessages.Any(r => r.Handler is not null && r.MessageType == "StreamCommand");
+
+    public bool HasManyStreamRequests =>
+        _requestMessages.Count(r => r.Handler is not null && r.MessageType == "StreamRequest") > ManyMessagesTreshold;
+    public bool HasManyStreamQueries =>
+        _requestMessages.Count(r => r.Handler is not null && r.MessageType == "StreamQuery") > ManyMessagesTreshold;
+    public bool HasManyStreamCommands =>
+        _requestMessages.Count(r => r.Handler is not null && r.MessageType == "StreamCommand") > ManyMessagesTreshold;
 
     public bool HasAnyRequest => HasRequests || HasCommands || HasQueries;
 
